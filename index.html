@@ -2,9 +2,9 @@
 <html lang="en">
 
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1.0">
-  <title>Oasis Restaurant – Mettupalayam</title>
+  <title>Oasis Restaurant | Best Restaurant in Mettupalayam</title>
+  <meta name="description"
+    content="Enjoy delicious food at Oasis Restaurant. Visit us in Mettupalayam. Book your table now.">
   <link
     href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Cormorant+Garamond:wght@300;400;500&family=Montserrat:wght@300;400;500;600&display=swap"
     rel="stylesheet">
@@ -485,4 +485,70 @@
   <script src="froutend/script.js"></script>
 </body>
 
-</html>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+<div id="chatbot-btn" onclick="toggleChat()">💬</div>
+
+<div id="chatbot-box">
+  <div id="chat-header">
+    <div style="width: 10px; height: 10px; background: #4ade80; border-radius: 50%;"></div>
+    Oasis Assistant
+  </div>
+  <div id="chat-body">
+    <div class="msg bot">Hi! I'm the Oasis Assistant. How can I help you today?</div>
+    <div class="options-container" id="initial-options">
+      <button class="chat-btn" onclick="reply('hours', '🕒 Opening Hours')">🕒 Opening Hours</button>
+      <button class="chat-btn" onclick="reply('location', '📍 Location')">📍 Location</button>
+      <button class="chat-btn" onclick="reply('booking', '🍽️ Book Table')">🍽️ Book Table</button>
+      <button class="chat-btn" onclick="reply('review', '⭐ Leave Review')">⭐ Leave Review</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  function toggleChat() {
+    const box = document.getElementById("chatbot-box");
+    if (box.style.display === "flex") {
+      box.classList.remove('active');
+      setTimeout(() => { box.style.display = "none"; }, 300);
+    } else {
+      box.style.display = "flex";
+      setTimeout(() => { box.classList.add('active'); }, 10);
+    }
+  }
+
+  function addMessage(text, type) {
+    const chatBody = document.getElementById("chat-body");
+    const msgDiv = document.createElement("div");
+    msgDiv.className = `msg ${type}`;
+    msgDiv.innerHTML = text;
+    chatBody.appendChild(msgDiv);
+
+    // Auto scroll to bottom
+    chatBody.scrollTop = chatBody.scrollHeight;
+  }
+
+  function reply(type, label) {
+    // 1. Add User's selection as a message
+    addMessage(label, 'user');
+
+    // 2. Add "Typing" feel with a tiny delay
+    setTimeout(() => {
+      let response = "";
+      if (type === "hours") {
+        response = ' We are open daily from (10 AM to 10 PM). Hope to see you soon!';
+      }
+      else if (type === "location") {
+        response = 'Find us here: <a class="chat-link" href="https://goo.gl/maps/example" target="_blank">View on Google Maps</a>';
+      }
+      else if (type === "booking") {
+        response = 'Ready to dine? <a class="chat-link" href="https://wa.me/+919150999777" target="_blank">Book via WhatsApp</a>';
+      }
+      else if (type === "review") {
+        response = 'We value your feedback! <a class="chat-link" href="#" target="_blank">Write a Review</a>';
+      }
+
+      addMessage(response, 'bot');
+    }, 600);
+  }
+</script>
