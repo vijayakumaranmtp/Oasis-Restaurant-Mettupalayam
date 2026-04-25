@@ -375,3 +375,222 @@ if (rvSec) rvObs.observe(rvSec);
     });
   });
 })();
+
+/* ══════════════════════════════════════════
+   SCROLL STACK
+══════════════════════════════════════════ */
+function initScrollStack() {
+  const scrollers = document.querySelectorAll('.scroll-stack-scroller');
+  if(!scrollers.length) return;
+
+  function getElementOffsetWithoutTransform(el) {
+    let top = 0;
+    while (el) {
+      top += el.offsetTop;
+      el = el.offsetParent;
+    }
+    return top;
+  }
+
+  function parsePercentage(value, containerHeight) {
+    if (typeof value === 'string' && value.includes('%')) {
+      return (parseFloat(value) / 100) * containerHeight;
+    }
+    return parseFloat(value);
+  }
+
+  function update() {
+    scrollers.forEach(scroller => {
+      // Only process active panels (to save performance and prevent bugs on hidden items)
+      if (scroller.closest('.menu-panel') && !scroller.closest('.menu-panel').classList.contains('active')) return;
+
+      const inner = scroller.querySelector('.scroll-stack-inner');
+      const cards = Array.from(inner.querySelectorAll('.scroll-stack-card')).filter(c => c.style.display !== 'none');
+      const endElement = inner.querySelector('.scroll-stack-end');
+      if (!cards.length) return;
+
+      const itemDistance = 16;
+      const itemScale = 0.03;
+      const itemStackDistance = 15;
+      const stackPosition = '20%';
+      const scaleEndPosition = '5%';
+      const baseScale = 0.9;
+
+      const scrollTop = window.scrollY;
+      const containerHeight = window.innerHeight;
+      const stackPositionPx = parsePercentage(stackPosition, containerHeight);
+      const scaleEndPositionPx = parsePercentage(scaleEndPosition, containerHeight);
+      
+      const endElementTop = endElement ? getElementOffsetWithoutTransform(endElement) : 0;
+
+      cards.forEach((card, i) => {
+        // Init styles if not set
+        if (!card.dataset.stacked) {
+          card.style.marginBottom = `${itemDistance}px`;
+          card.style.willChange = 'transform, filter';
+          card.style.transformOrigin = 'top center';
+          card.style.backfaceVisibility = 'hidden';
+          card.dataset.stacked = "true";
+        }
+
+        const cardTop = getElementOffsetWithoutTransform(card);
+        const triggerStart = cardTop - stackPositionPx - itemStackDistance * i;
+        const triggerEnd = cardTop - scaleEndPositionPx;
+        const pinStart = cardTop - stackPositionPx - itemStackDistance * i;
+        const pinEnd = endElementTop - containerHeight / 2;
+
+        let scaleProgress = 0;
+        if (scrollTop > triggerStart) {
+            if (scrollTop > triggerEnd) scaleProgress = 1;
+            else scaleProgress = (scrollTop - triggerStart) / (triggerEnd - triggerStart);
+        }
+
+        const targetScale = baseScale + i * itemScale;
+        const scale = 1 - scaleProgress * (1 - targetScale);
+
+        let translateY = 0;
+        const isPinned = scrollTop >= pinStart && scrollTop <= pinEnd;
+
+        if (isPinned) {
+          translateY = scrollTop - cardTop + stackPositionPx + itemStackDistance * i;
+        } else if (scrollTop > pinEnd) {
+          translateY = pinEnd - cardTop + stackPositionPx + itemStackDistance * i;
+        }
+
+        card.style.transform = `translate3d(0, ${translateY}px, 0) scale(${scale})`;
+      });
+    });
+  }
+
+  window.addEventListener('scroll', update);
+  window.addEventListener('resize', update);
+  // Also run update when filters or tabs are clicked
+  document.querySelectorAll('.menu-tab, .filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => { setTimeout(update, 50); });
+  });
+  update();
+}
+
+// Initialize on load
+window.addEventListener('DOMContentLoaded', initScrollStack);
+
+function initParticleText() {
+  const canvas = document.getElementById("particle-text-canvas");
+  if (!canvas) return;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+
+  const parent = canvas.parentElement;
+  canvas.width = parent.clientWidth || window.innerWidth;
+  canvas.height = 250;
+
+  let particles = [];
+  let mouse = {
+    x: null,
+    y: null,
+    radius: 80
+  };
+
+  const handleMouseMove = (event) => {
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = event.clientX - rect.left;
+    mouse.y = event.clientY - rect.top;
+  };
+  
+  const handleTouchMove = (event) => {
+    if (event.touches.length > 0) {
+      const rect = canvas.getBoundingClientRect();
+      mouse.x = event.touches[0].clientX - rect.left;
+      mouse.y = event.touches[0].clientY - rect.top;
+    }
+  };
+
+  window.addEventListener("mousemove", handleMouseMove);
+  window.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+  window.addEventListener("resize", () => {
+    canvas.width = parent.clientWidth || window.innerWidth;
+    canvas.height = 250;
+    setupText();
+  });
+
+  class Particle {
+    constructor(x, y) {
+      this.baseX = x;
+      this.baseY = y;
+      this.x = x;
+      this.y = y;
+      this.size = 2;
+      this.density = Math.random() * 30 + 1;
+    }
+
+    draw() {
+      ctx.fillStyle = "#c9a84c";
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    update() {
+      let dx = mouse.x - this.x;
+      let dy = mouse.y - this.y;
+      let distance = Math.sqrt(dx * dx + dy * dy);
+
+      if (distance < mouse.radius) {
+        let force = (mouse.radius - distance) / mouse.radius;
+        let directionX = dx / distance;
+        let directionY = dy / distance;
+
+        this.x -= directionX * force * this.density;
+        this.y -= directionY * force * this.density;
+      } else {
+        this.x += (this.baseX - this.x) * 0.05;
+        this.y += (this.baseY - this.y) * 0.05;
+      }
+    }
+  }
+
+  function setupText() {
+    particles = [];
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    ctx.font = "bold 100px 'Playfair Display', serif";
+    ctx.fillStyle = "#c9a84c";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("OASIS", canvas.width / 2, canvas.height / 2 - 25);
+    
+    ctx.font = "600 22px 'Playfair Display', serif";
+    ctx.fillText("RESTAURANT", canvas.width / 2, canvas.height / 2 + 50);
+
+    const textData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+    for (let y = 0; y < canvas.height; y += 2) {
+      for (let x = 0; x < canvas.width; x += 2) {
+        const index = (y * canvas.width + x) * 4;
+        if (textData.data[index + 3] > 128) {
+          particles.push(new Particle(x, y));
+        }
+      }
+    }
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    for (let i = 0; i < particles.length; i++) {
+      particles[i].update();
+      particles[i].draw();
+    }
+
+    requestAnimationFrame(animate);
+  }
+
+  // Delay setup slightly to ensure fonts are loaded
+  setTimeout(() => {
+    setupText();
+    animate();
+  }, 500);
+}
+
+window.addEventListener('DOMContentLoaded', initParticleText);
