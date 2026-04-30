@@ -28,6 +28,7 @@
 
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
 }
 
 body {
@@ -35,6 +36,10 @@ body {
   background: var(--white);
   color: var(--text);
   overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  position: relative;
   cursor: none;
 }
 
@@ -720,14 +725,29 @@ section {
 
 .scroll-stack-scroller {
   position: relative;
+  width: 100%;
 }
 
 .scroll-stack-inner {
   position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.scroll-stack-card {
+  position: relative;
+  width: 100%;
+  will-change: transform, filter;
+  transform-origin: top center;
+  backface-visibility: hidden;
+  perspective: 1000px;
 }
 
 .scroll-stack-end {
   height: 50vh;
+  width: 100%;
   pointer-events: none;
 }
 
